@@ -14,6 +14,9 @@ DDNS with AWS Lambda, Amazon API Gateway and Route53
 ## Lambda
 - role: lambda-ddns-role
 - code: [lambda_function.py](./lambda_function.py)
+- trigger
+  - API Gateway
+    - protocol: HTTP
 - environment variables
   - DK: sha256(SALT+key)
     - `hashlib.sha256((SALT + key).encode()).hexdigest()`
