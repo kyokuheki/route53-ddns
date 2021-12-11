@@ -22,3 +22,14 @@ DDNS with AWS Lambda, Amazon API Gateway and Route53
     - `hashlib.sha256((SALT + key).encode()).hexdigest()`
   - SALT: Random string to set for SALT
   - ROLE_ARN: ARN of ddns-role. If you do not want cross-account access, do not set it.
+
+## curl
+
+```shell
+# IPv6
+curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?ipver=6&fqdn=<v6.example.com.>&zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&ipv6=<IPV6_ADDRESS>'
+
+# IPv4
+curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?ipver=4&fqdn=<v4.example.com.>&zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>'
+
+```
