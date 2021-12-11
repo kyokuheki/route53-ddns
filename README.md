@@ -31,5 +31,11 @@ curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/defau
 
 # IPv4
 curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?ipver=4&fqdn=<v4.example.com.>&zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>'
-
 ```
+
+## refs
+- https://orange.kaosy.org/2021/04/05/dynamic-dns-using-route-53-and-lambda/
+- https://www.rocher.kyoto.jp/arbr/?p=1460
+- https://qiita.com/nori3tsu/items/80a620553f589e19f002
+- https://qiita.com/keys/items/43adf968d366e80f0003
+- https://aws.amazon.com/jp/blogs/compute/building-a-dynamic-dns-for-route-53-using-cloudwatch-events-and-lambda/
