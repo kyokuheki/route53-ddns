@@ -1,2 +1,2 @@
 # route53-ddns
-DDNS lambda code for route53
+DDNS with AWS Lambda, Amazon API Gateway and Route53
