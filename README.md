@@ -26,14 +26,16 @@ DDNS with AWS Lambda, Amazon API Gateway and Route53
 ## curl
 
 ```shell
+# IPv6/IPv4
+curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<example.com.>&ipv6=<IPV6_ADDRESS>&ipv6=<IPV4_ADDRESS>'
+
 # IPv6
 curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<v6.example.com.>&ipv6=<IPV6_ADDRESS>'
 
 # IPv4
-## register the source IP address.
-curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<v4.example.com.>&ipv4=source'
-## register the address specified by the parameter
 curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<v4.example.com.>&ipv4=<IPV4_ADDRESS>'
+## if ipv4=source, register the source IP address.
+curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<v4.example.com.>&ipv4=source'
 ```
 
 ## refs
