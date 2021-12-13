@@ -37,12 +37,12 @@ def get_client():
     else:
         return boto3.client('route53')
 
-def get_query_parameter(event, key):
+def get_query_parameter(event, key,):
     try:
         r = event['queryStringParameters'][key]
         logger.info('{}: {}'.format(key, r))
     except Exception as e:
-        logging.exception("{} not found.".format(key))
+        logger.warn("{} not found.".format(key))
         raise DdnsException(statusCode=400, message="invalid query parameter: {} not found".format(key))
     return r
 
@@ -99,12 +99,14 @@ def lambda_handler(event, context):
                 if current_address_v4 == 'source':
                     current_address_v4 = source_ip
                 else:
-                    ipv4_enabled = False
+                    raise DdnsException(statusCode=400, message="ipv4_addr is invalid.")
         
         # register the value of ipv6_addr if it is a valid value.
         try:
-            current_address_v6 = get_query_parameter(event, 'ipv6_addr')
+            current_address_v6 = str(ipaddress.IPv6Address(get_query_parameter(event, 'ipv6_addr')))
             ipv6_enabled = True
+        except ipaddress.AddressValueError:
+            raise DdnsException(statusCode=400, message="ipv6_addr is invalid.")
         except DdnsException:
             ipv6_enabled = False
         
@@ -124,9 +126,10 @@ def lambda_handler(event, context):
             response['ipv6'] = route53_ddns(client, zone_id, resource_record_sets, fqdn, 'AAAA', current_address_v6)
 
     except DdnsException as e:
+        logger.exception(e.message)
         return e.response()
     except Exception as e:
-        logging.exception("An unknown exception has occurred.")
+        logger.exception("An unknown exception has occurred.")
         import traceback
         return {
             'statusCode': 500,
