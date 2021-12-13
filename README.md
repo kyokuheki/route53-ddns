@@ -27,10 +27,13 @@ DDNS with AWS Lambda, Amazon API Gateway and Route53
 
 ```shell
 # IPv6
-curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?ipver=6&fqdn=<v6.example.com.>&zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&ipv6=<IPV6_ADDRESS>'
+curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<v6.example.com.>&ipv6=<IPV6_ADDRESS>'
 
 # IPv4
-curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?ipver=4&fqdn=<v4.example.com.>&zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>'
+## register the source IP address.
+curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<v4.example.com.>&ipv4=source'
+## register the address specified by the parameter
+curl -X POST 'https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/default/ddns?zone_id=<YOUR_HOSTED_ZONE_ID>&key=<key>&fqdn=<v4.example.com.>&ipv4=<IPV4_ADDRESS>'
 ```
 
 ## refs
