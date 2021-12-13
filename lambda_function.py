@@ -23,9 +23,6 @@ class DdnsException(Exception):
             'body': json.dumps({'errors':{'code': self.statusCode, 'message':self.message}})
         }
 
-def check_key(k: str):
-    return DK == hashlib.sha256((SALT + k).encode()).hexdigest()
-
 def get_client():
     if ROLE_ARN is not None:
         sts_connection = boto3.client('sts')
@@ -50,48 +47,46 @@ def get_query_parameter(event, key):
     return r
 
 def route53_ddns(client, zone_id, resource_record_sets, fqdn, rtype, current_address):
+    response = {'updated': False, 'new':current_address}
     target_rr = [v for v in resource_record_sets if v['Type'] == rtype]
     logger.info(target_rr)
     
     if len(target_rr):
         registered_address = target_rr[0]['ResourceRecords'][0]['Value']
+        response['old'] = registered_address
+        logger.info('new: {}\nold: {}'.format(current_address, registered_address))
+        if current_address != registered_address:
+            logger.info('ddns update required: ({}: {})'.format(fqdn, rtype))
+            target_rr[0]['ResourceRecords'][0]['Value'] = current_address
+            client.change_resource_record_sets(
+                HostedZoneId = zone_id,
+                ChangeBatch = {
+                    'Comment': 'ddns update',
+                    'Changes': [{
+                        'Action': 'UPSERT',
+                        'ResourceRecordSet':target_rr[0]
+                    }]
+                }
+            )
+            logger.info('ddns updated: ({}: {})'.format(fqdn, rtype))
+            response['updated'] = True
     elif resource_record_sets != []:
-        raise DdnsException(statusCode=409, message="ResourceRecords({}) is not sutable: {}".format(fqdn, resource_record_sets))
+        response['error'] = "The requested record type({}) does not exist in ResourceRecords({}): {}".format(rtype, fqdn, resource_record_sets)
     else:
-        raise DdnsException(statusCode=409, message="ResourceRecords({}) is unregistered.".format(fqdn))
-    
-    logger.info('current_address: {}'.format(current_address))
-    logger.info('registered_address: {}'.format(registered_address))
-    if current_address == registered_address:
-        return False, registered_address
-
-    logger.info('ddns update required: ({}: {})'.format(fqdn, rtype))
-    target_rr[0]['ResourceRecords'][0]['Value'] = current_address
-    client.change_resource_record_sets(
-        HostedZoneId = zone_id,
-        ChangeBatch = {
-            'Comment': 'ddns update',
-            'Changes': [{
-                'Action': 'UPSERT',
-                'ResourceRecordSet':target_rr[0]
-            }]
-        }
-    )
-    logger.info('ddns updated: ({}: {})'.format(fqdn, rtype))
-    return True, registered_address
+        response['error'] = "ResourceRecords({}) is unregistered.".format(fqdn)
+    return response
 
 def lambda_handler(event, context):
     response = {}
     try:
-        if not check_key(get_query_parameter(event, 'key')):
+        if DK != hashlib.sha256((SALT + get_query_parameter(event, 'key')).encode()).hexdigest():
             raise DdnsException(statusCode=403, message="Bad Authentication data.")
         source_ip = event['requestContext']['http']['sourceIp']
         logger.info('source_ip: {}'.format(source_ip))
         fqdn = get_query_parameter(event, 'fqdn')
         zone_id = get_query_parameter(event, 'zone_id')
         
-        # register the value of ipv4_addr if it is a valid value, 
-        # or the source IPv4 address if it is 'source'.
+        # register the value of ipv4_addr if it is a valid value, or the source IPv4 address if it is 'source'.
         try:
             current_address_v4 = get_query_parameter(event, 'ipv4_addr')
             ipv4_enabled = True
@@ -122,21 +117,11 @@ def lambda_handler(event, context):
 
         # register IPv4 address
         if ipv4_enabled:
-            updated, registered_address = route53_ddns(client, zone_id, resource_record_sets, fqdn, 'A', current_address_v4)
-            response['ipv4'] = {
-                'updated': updated,
-                'new':current_address_v4,
-                'old':registered_address,
-            }
+            response['ipv4'] = route53_ddns(client, zone_id, resource_record_sets, fqdn, 'A', current_address_v4)
 
         # register IPv6 address
         if ipv6_enabled:
-            updated, registered_address = route53_ddns(client, zone_id, resource_record_sets, fqdn, 'AAAA', current_address_v6)
-            response['ipv6'] = {
-                'updated': updated,
-                'new':current_address_v6,
-                'old':registered_address,
-            }
+            response['ipv6'] = route53_ddns(client, zone_id, resource_record_sets, fqdn, 'AAAA', current_address_v6)
 
     except DdnsException as e:
         return e.response()
@@ -147,7 +132,4 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps({'errors':{'code': 500, 'message':str(e) + traceback.format_exc()}})
         }
-    return {
-        'statusCode': 200,
-        'body': json.dumps(response)
-    }
+    return {'statusCode': 200, 'body': json.dumps(response)}
